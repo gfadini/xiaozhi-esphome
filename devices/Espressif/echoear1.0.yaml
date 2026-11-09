@@ -1,5 +1,5 @@
 substitutions:
-  name: esphome-web-aec6f4
+  name: esphome-web-aec830
   friendly_name: echoear
 
 ## Modular version Main v1.08 SINGLE FILE for Echoear 1.0
@@ -15,7 +15,7 @@ substitutions:
 
   startup_sound: "Home_Connected" # (options are: available, Home_Connected, Home_Connected_Male, Computer_Ready)
   clock_background_image: "tron" # (options are: clock, hacker, ha-girl, mission, starrysky, waves, tron)
-  imagemodel: "Gwen" # options are:
+  imagemodel: "Eyes" # options are:
 
 # Alita, Alfred, Astrobot, Buzz, Casita, Cybergirl, Dory, EVE, Eyes, Eyes2, GLaDOS, Girl1, Guy1, Guy2, Gwen, HA-character, ha-girl, Hacker, Harley,
 # Jarvis, Luffy, Mario, Max, Prime, Robochibi, Robocop, Robot, Robotgirl, Shaun
@@ -164,7 +164,7 @@ api:
         if (!id(boot_sound_played)) {
           id(boot_sound_played) = true;
           if (id(startup_sound_switch).state) {
-            id(play_sound)->execute(true, id(ready_sound));
+            id(play_sound)->execute(true, const_cast<audio::AudioFile*>(id(ready_sound)));
           }
         }
     - script.execute: reset_screensaver
@@ -365,7 +365,7 @@ binary_sensor:
             else:
               - if:
                   condition:
-                    lambda: return id(wake_word_engine_location).state == "On device";
+                    lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
                   then:
                     - media_player.stop:
                         id: external_media_player
@@ -398,7 +398,7 @@ binary_sensor:
               else:
                 - if:
                     condition:
-                      lambda: return id(wake_word_engine_location).state == "On device";
+                      lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
                     then:
                       - media_player.stop:
                           id: external_media_player
@@ -563,7 +563,7 @@ micro_wake_word:
           - script.execute:
               id: play_sound
               priority: true
-              sound_file: !lambda return id(wake_word_triggered_sound);
+              sound_file: !lambda return const_cast<audio::AudioFile*>(id(wake_word_triggered_sound));
           - delay: 300ms
     - voice_assistant.start:
         wake_word: !lambda return wake_word;
@@ -635,7 +635,7 @@ voice_assistant:
 
     - if:
         condition:
-          - lambda: return id(wake_word_engine_location).state == "On device";
+          - lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
         then:
           - lambda: id(va).set_use_wake_word(false);
           - micro_wake_word.start:
@@ -1055,7 +1055,7 @@ script:
               - not:
                   speaker.is_playing:
                     id: box_speaker
-              - lambda: return id(wake_word_engine_location).state == "On device";
+              - lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
           then:
             - lambda: id(va).set_use_wake_word(false);
             - micro_wake_word.start:
@@ -1064,7 +1064,7 @@ script:
             and:
               - not:
                   voice_assistant.is_running:
-              - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+              - lambda: return std::string(id(wake_word_engine_location).current_option()) == "In Home Assistant";
           then:
             - lambda: id(va).set_use_wake_word(true);
             - voice_assistant.start_continuous:
@@ -1073,13 +1073,13 @@ script:
     then:
       - if:
           condition:
-            lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+            lambda: return std::string(id(wake_word_engine_location).current_option()) == "In Home Assistant";
           then:
             - lambda: id(va).set_use_wake_word(false);
             - voice_assistant.stop:
       - if:
           condition:
-            lambda: return id(wake_word_engine_location).state == "On device";
+            lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
           then:
             - micro_wake_word.stop:
 
@@ -1128,7 +1128,7 @@ script:
           else:
             - if:
                 condition:
-                  lambda: return id(wake_word_engine_location).state == "On device";
+                  lambda: return std::string(id(wake_word_engine_location).current_option()) == "On device";
                 then:
                   - if:
                       condition:
@@ -1144,7 +1144,7 @@ script:
   - id: show_clock_page
     then:
       - lambda: |-
-          const std::string sel = id(clock_style).state;
+          const std::string sel = std::string(id(clock_style).current_option());
           if (sel == "Default") {
             id(main_display).show_page(default_clock);
           } else if (sel == "Flip") {
@@ -1169,7 +1169,7 @@ script:
             "7-segment","Flip","Default","Presence","Weather","Small","Analog"
           };
           const int N = sizeof(opts)/sizeof(opts[0]);
-          std::string cur = id(clock_style).state.c_str();
+          std::string cur = std::string(id(clock_style).current_option()).c_str();
           int idx = 0;
           for (int i = 0; i < N; i++) if (cur == opts[i]) { idx = i; break; }
           int next = (idx + 1) % N;
@@ -1183,7 +1183,7 @@ script:
             "7-segment","Flip","Default","Presence","Weather","Small","Analog"
           };
           const int N = sizeof(opts)/sizeof(opts[0]);
-          std::string cur = id(clock_style).state.c_str();
+          std::string cur = std::string(id(clock_style).current_option()).c_str();
           int idx = 0;
           for (int i = 0; i < N; i++) if (cur == opts[i]) { idx = i; break; }
           int prev = (idx - 1 + N) % N;
@@ -1195,7 +1195,7 @@ script:
       - lambda: |-
           static const char* const opts[] = { "clock","hacker","ha-girl","mission","Rolex","starrysky","waves","tron" };
           const int N = sizeof(opts)/sizeof(opts[0]);
-          std::string cur = id(clock_wallpaper_image).state.c_str();
+          std::string cur = std::string(id(clock_wallpaper_image).current_option()).c_str();
           int idx = 0;
           for (int i = 0; i < N; i++) if (cur == opts[i]) { idx = i; break; }
           int next = (idx + 1) % N;
@@ -1939,7 +1939,7 @@ media_player:
             - script.execute: stop_wake_word
             - if:
                 condition:
-                  - lambda: return id(wake_word_engine_location).state == "In Home Assistant";
+                  - lambda: return std::string(id(wake_word_engine_location).current_option()) == "In Home Assistant";
                 then:
                   - wait_until:
                       condition:
